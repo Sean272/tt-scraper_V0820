@@ -14,6 +14,7 @@ interface VideoData {
   likes: string;
   plays: string;
   createTime: string;
+  videoUrl: string;
 }
 
 interface QueryInfo {
@@ -77,7 +78,12 @@ export default function AuthorVideos() {
       const response = await axios.post('/api/author-videos', values);
       
       if (response.data && response.data.length > 0) {
-        setData(response.data);
+        // 确保每个视频对象都有正确的ID
+        const videos = response.data.map((video: VideoData) => ({
+          ...video,
+          id: video.videoUrl.split('/').pop() || video.id // 从视频链接中提取ID作为备选
+        }));
+        setData(videos);
         setQueryInfo(values);
       } else {
         setData([]);
@@ -109,7 +115,12 @@ export default function AuthorVideos() {
       });
 
       if (response.data && response.data.length > 0) {
-        setData(response.data);
+        // 确保每个视频对象都有正确的ID
+        const videos = response.data.map((video: VideoData) => ({
+          ...video,
+          id: video.videoUrl.split('/').pop() || video.id // 从视频链接中提取ID作为备选
+        }));
+        setData(videos);
         setQueryInfo(null);
       } else {
         setData([]);
