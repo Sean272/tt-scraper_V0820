@@ -71,48 +71,24 @@ export async function POST(request: Request) {
     // 读取CSV文件
     const csvPath = match[1];
     const csvContent = await readFile(csvPath, 'utf-8');
+    const records = parse(csvContent, {
+      columns: true,
+      skip_empty_lines: true,
+      delimiter: ',',
+      relax_column_count: true // 允许列数不一致
+    });
 
-    // 从命令行输出中解析视频信息
-    const videos: VideoData[] = [];
-    let currentVideo: Partial<VideoData> = {};
-    
-    const lines = stdout.split('\n');
-    for (const line of lines) {
-      if (line.startsWith('视频 ')) {
-        if (Object.keys(currentVideo).length > 0) {
-          videos.push(currentVideo as VideoData);
-        }
-        currentVideo = { author };
-        continue;
-      }
-
-      const descMatch = line.match(/^- 描述: (.+)$/);
-      const likesMatch = line.match(/^- 点赞数: (\d+)$/);
-      const playsMatch = line.match(/^- 播放数: (\d+)$/);
-      const timeMatch = line.match(/^- 创建时间: (.+)$/);
-
-      if (descMatch) {
-        currentVideo.description = descMatch[1];
-      } else if (likesMatch) {
-        currentVideo.likes = likesMatch[1];
-      } else if (playsMatch) {
-        currentVideo.plays = playsMatch[1];
-      } else if (timeMatch) {
-        currentVideo.createTime = timeMatch[1];
-      }
-
-      // 从CSV内容中提取视频ID
-      const idMatch = line.match(/https:\/\/www\.tiktok\.com\/@[\w.]+\/video\/(\d+)/);
-      if (idMatch) {
-        currentVideo.id = idMatch[1];
-        currentVideo.videoUrl = line.trim();
-      }
-    }
-
-    // 添加最后一个视频
-    if (Object.keys(currentVideo).length > 0) {
-      videos.push(currentVideo as VideoData);
-    }
+    // 转换数据格式
+    const videos = records.map((record: any) => ({
+      id: record['视频ID'],
+      description: record['描述'],
+      author: record['作者'],
+      likes: record['点赞数'],
+      comments: record['评论数'],
+      plays: record['播放数'],
+      createTime: record['创建时间'],
+      videoUrl: record['视频链接']
+    }));
 
     return NextResponse.json(videos);
   } catch (error) {
