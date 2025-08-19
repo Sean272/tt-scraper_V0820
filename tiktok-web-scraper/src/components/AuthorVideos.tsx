@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Form, Input, Button, Table, Select, Alert, Space } from 'antd';
+import { Form, Input, Button, Table, Select, Alert, Space, Upload } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import type { UploadFile } from 'antd/es/upload/interface';
 import axios from 'axios';
 
 interface VideoData {
@@ -12,7 +14,6 @@ interface VideoData {
   likes: string;
   plays: string;
   createTime: string;
-  videoUrl: string;
 }
 
 interface QueryInfo {
@@ -27,6 +28,7 @@ export default function AuthorVideos() {
   const [data, setData] = useState<VideoData[]>([]);
   const [queryInfo, setQueryInfo] = useState<QueryInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const columns: ColumnsType<VideoData> = [
     {
@@ -88,6 +90,38 @@ export default function AuthorVideos() {
     }
   };
 
+  const handleBatchUpload = async () => {
+    if (!fileList.length) {
+      setError('请先选择文件');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    const formData = new FormData();
+    formData.append('file', fileList[0].originFileObj as Blob);
+
+    try {
+      const response = await axios.post('/api/batch-authors-videos', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data && response.data.length > 0) {
+        setData(response.data);
+        setQueryInfo(null);
+      } else {
+        setData([]);
+        setError('未找到视频');
+      }
+    } catch (error) {
+      setError('批量查询失败，请检查文件格式');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
       <Form form={form} layout="inline">
@@ -119,6 +153,27 @@ export default function AuthorVideos() {
           </Button>
         </Form.Item>
       </Form>
+
+      <div>
+        <Upload
+          accept=".txt"
+          fileList={fileList}
+          onChange={({ fileList }) => setFileList(fileList)}
+          beforeUpload={() => false}
+          maxCount={1}
+        >
+          <Button icon={<UploadOutlined />}>选择作者列表文件</Button>
+        </Upload>
+        <Button
+          type="primary"
+          onClick={handleBatchUpload}
+          loading={loading}
+          style={{ marginLeft: 16 }}
+          disabled={!fileList.length}
+        >
+          批量查询
+        </Button>
+      </div>
 
       {queryInfo && (
         <Alert
