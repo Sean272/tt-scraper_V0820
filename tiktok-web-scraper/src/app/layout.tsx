@@ -1,5 +1,4 @@
-import AntdRegistry from '@/lib/AntdRegistry';
-import './globals.css';
+import StyledComponentsRegistry from '@/lib/AntdRegistry';
 
 export default function RootLayout({
   children,
@@ -8,8 +7,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body>
-        <AntdRegistry>{children}</AntdRegistry>
+        <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
       </body>
     </html>
   );
