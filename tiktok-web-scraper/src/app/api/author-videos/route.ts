@@ -12,7 +12,6 @@ interface VideoData {
   description: string;
   author: string;
   likes: string;
-  comments: string;
   plays: string;
   createTime: string;
   videoUrl: string;
@@ -84,9 +83,8 @@ export async function POST(request: Request) {
       description: record['描述'],
       author: record['作者'],
       likes: record['点赞数'],
-      comments: record['评论数'],
       plays: record['播放数'],
-      createTime: record['创建时间'],
+      createTime: record['创建时间'].trim(), // 去除可能的前后空格
       videoUrl: record['视频链接']
     }));
 
