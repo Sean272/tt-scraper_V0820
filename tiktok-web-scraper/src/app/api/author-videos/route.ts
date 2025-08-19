@@ -61,6 +61,13 @@ export async function POST(request: Request) {
     console.log('Raw stdout:', stdout);
     if (stderr) console.error('Raw stderr:', stderr);
 
+    // 检查是否有错误信息
+    if (stdout.includes('获取视频失败') || stdout.includes('Error:')) {
+      const errorMatch = stdout.match(/获取视频失败: (.+)/) || stdout.match(/Error: (.+)/);
+      const errorMessage = errorMatch ? errorMatch[1] : '获取视频数据失败';
+      return NextResponse.json({ error: errorMessage }, { status: 500 });
+    }
+
     // 从输出中找到CSV文件路径
     const match = stdout.match(/数据已保存到: (.+\.csv)/);
     if (!match) {
@@ -70,27 +77,37 @@ export async function POST(request: Request) {
     // 读取CSV文件
     const csvPath = match[1];
     const csvContent = await readFile(csvPath, 'utf-8');
-    const records = parse(csvContent, {
-      columns: true,
+    
+    // 直接读取CSV内容，不使用columns选项
+    const rawRecords = parse(csvContent, {
       skip_empty_lines: true,
       delimiter: ',',
-      relax_column_count: true // 允许列数不一致
+      trim: true,
+      fromLine: 2 // 跳过标题行
     });
 
     // 转换数据格式
-    const videos = records.map((record: any) => ({
-      id: record['视频ID'],
-      description: record['描述'],
-      author: record['作者'],
-      likes: record['点赞数'],
-      plays: record['播放数'],
-      createTime: record['创建时间'].trim(), // 去除可能的前后空格
-      videoUrl: record['视频链接']
+    const videos = rawRecords.map(record => ({
+      id: record[0], // 视频ID
+      description: record[1], // 描述
+      author: record[2], // 作者
+      likes: record[3], // 点赞数
+      plays: record[6], // 播放数
+      createTime: `${record[7]} ${record[8]}`, // 合并日期和时间
+      videoUrl: record[9] // 视频链接
     }));
 
+    if (videos.length === 0) {
+      return NextResponse.json({ error: '未找到视频' }, { status: 404 });
+    }
+
     return NextResponse.json(videos);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error:', error);
+    // 如果是用户不存在的错误，返回特定的错误信息
+    if (error.message?.includes('secUid')) {
+      return NextResponse.json({ error: '用户不存在或未找到视频' }, { status: 404 });
+    }
     return NextResponse.json(
       { error: '获取作者视频数据失败' },
       { status: 500 }

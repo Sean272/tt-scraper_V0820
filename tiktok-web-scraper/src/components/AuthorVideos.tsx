@@ -36,8 +36,8 @@ export default function AuthorVideos() {
       title: '视频ID',
       dataIndex: 'id',
       key: 'id',
-      render: (text: string) => (
-        <a href={`https://www.tiktok.com/video/${text}`} target="_blank" rel="noopener noreferrer">
+      render: (text: string, record: VideoData) => (
+        <a href={`https://www.tiktok.com/@${record.author}/video/${text}`} target="_blank" rel="noopener noreferrer">
           {text}
         </a>
       ),
@@ -78,12 +78,7 @@ export default function AuthorVideos() {
       const response = await axios.post('/api/author-videos', values);
       
       if (response.data && response.data.length > 0) {
-        // 确保每个视频对象都有正确的ID
-        const videos = response.data.map((video: VideoData) => ({
-          ...video,
-          id: video.videoUrl.split('/').pop() || video.id // 从视频链接中提取ID作为备选
-        }));
-        setData(videos);
+        setData(response.data);
         setQueryInfo(values);
       } else {
         setData([]);
@@ -115,12 +110,7 @@ export default function AuthorVideos() {
       });
 
       if (response.data && response.data.length > 0) {
-        // 确保每个视频对象都有正确的ID
-        const videos = response.data.map((video: VideoData) => ({
-          ...video,
-          id: video.videoUrl.split('/').pop() || video.id // 从视频链接中提取ID作为备选
-        }));
-        setData(videos);
+        setData(response.data);
         setQueryInfo(null);
       } else {
         setData([]);
