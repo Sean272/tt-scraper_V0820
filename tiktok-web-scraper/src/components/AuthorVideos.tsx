@@ -157,7 +157,7 @@ export default function AuthorVideos() {
 
       <div>
         <Upload
-          accept=".txt"
+          accept=".txt,.csv"
           fileList={fileList}
           onChange={({ fileList }) => setFileList(fileList)}
           beforeUpload={() => false}

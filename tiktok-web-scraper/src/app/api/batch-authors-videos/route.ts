@@ -63,7 +63,10 @@ export async function POST(request: Request) {
             const records = parse(csvContent, {
               columns: true,
               skip_empty_lines: true,
-              trim: true
+              trim: true,
+              relax_column_count: true,
+              quote: '"',
+              escape: '"'
             });
             
             // 将CSV数据转换为API格式
