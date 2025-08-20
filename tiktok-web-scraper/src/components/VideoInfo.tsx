@@ -75,7 +75,11 @@ export default function VideoInfo() {
     try {
       setLoading(true);
       const response = await axios.post('/api/single-video', values);
-      setData([response.data]);
+      if (response.data) {
+        setData([response.data]);
+      } else {
+        setData([]);
+      }
       message.success('获取成功');
     } catch (error) {
       message.error('获取失败，请重试');
@@ -95,7 +99,11 @@ export default function VideoInfo() {
       const formData = new FormData();
       formData.append('file', fileList[0].originFileObj as File);
       const response = await axios.post('/api/batch-videos', formData);
-      setData(response.data);
+      if (Array.isArray(response.data)) {
+        setData(response.data);
+      } else {
+        setData([]);
+      }
       message.success('获取成功');
     } catch (error) {
       message.error('获取失败，请重试');

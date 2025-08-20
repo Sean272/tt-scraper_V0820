@@ -60,7 +60,11 @@ export default function UserVideos() {
     try {
       setLoading(true);
       const response = await axios.post('/api/user-videos', values);
-      setData(response.data.data);
+      if (Array.isArray(response.data.data)) {
+        setData(response.data.data);
+      } else {
+        setData([]);
+      }
       setFileName(response.data.fileName);
       message.success('获取成功');
     } catch (error) {

@@ -157,11 +157,12 @@ const AuthorFollowers: React.FC = () => {
       authors
     });
 
-    if (response.data.success) {
+    if (response.data.success && Array.isArray(response.data.data)) {
       setData(response.data.data);
       setSummary(response.data.summary);
       message.success(`查询完成！成功 ${response.data.summary.success} 个，失败 ${response.data.summary.failed} 个`);
     } else {
+      setData([]);
       message.error(response.data.error || '查询失败');
     }
   };

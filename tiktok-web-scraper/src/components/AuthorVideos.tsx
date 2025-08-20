@@ -77,7 +77,7 @@ export default function AuthorVideos() {
       
       const response = await axios.post('/api/author-videos', values);
       
-      if (response.data && response.data.length > 0) {
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         setData(response.data);
         setQueryInfo(values);
       } else {
@@ -109,7 +109,7 @@ export default function AuthorVideos() {
         },
       });
 
-      if (response.data && response.data.length > 0) {
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         setData(response.data);
         setQueryInfo(null);
       } else {
