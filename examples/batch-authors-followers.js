@@ -136,9 +136,9 @@ async function getUserProfileInfo(username) {
         shareMeta: userDetail.shareMeta
     };
 }
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
+import fs from 'fs';
+import path from 'path';
+import csvParser from 'csv-parser';
 
 // 检查命令行参数
 if (process.argv.length < 3) {
@@ -257,7 +257,7 @@ async function main() {
     
     return new Promise((resolve, reject) => {
         fs.createReadStream(authorsFile)
-            .pipe(csv())
+            .pipe(csvParser())
             .on('data', (row) => {
                 // 如果指定了列名，使用指定的列；否则使用第一列
                 let authorName;
