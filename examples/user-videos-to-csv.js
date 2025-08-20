@@ -185,7 +185,7 @@ async function getUserVideos(username, timeRange, timeUnit, skipCapcutCheck = fa
                 fs.mkdirSync(outputDir);
             }
 
-            // 保存CSV文件，添加BOM标记
+            // 保存CSV文件，添加BOM标记确保中文正确显示
             const outputPath = path.join(outputDir, `${username}_videos.csv`);
             const BOM = '\ufeff';
             fs.writeFileSync(outputPath, BOM + csvContent, { encoding: 'utf8' });

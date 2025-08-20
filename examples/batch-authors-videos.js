@@ -3,6 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { createObjectCsvWriter } from 'csv-writer';
+import { setupTerminalEncoding, fixCsvEncoding } from './fix-encoding.js';
+
+// 设置终端编码
+setupTerminalEncoding();
 
 // 获取当前文件的目录路径
 const __filename = fileURLToPath(import.meta.url);
@@ -177,6 +181,9 @@ for (const author of authors) {
 // 如果有视频数据，写入CSV
 if (allVideos.length > 0) {
   await csvWriter.writeRecords(allVideos);
+  
+  // 修复CSV编码确保中文正确显示
+  fixCsvEncoding(csvPath);
 }
 
 console.log('\n=== 批量获取完成 ===');
