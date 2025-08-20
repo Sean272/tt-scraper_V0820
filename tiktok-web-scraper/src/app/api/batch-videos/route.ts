@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import { writeFile, readFile } from 'fs/promises';
 import { join, resolve, basename } from 'path';
 import { tmpdir } from 'os';
+import { parse } from 'csv-parse/sync';
 
 const execAsync = promisify(exec);
 
@@ -70,31 +71,54 @@ export async function POST(request: Request) {
     try {
       // 读取 CSV 文件内容
       const fileContent = await readFile(outputPath, 'utf-8');
-      // 解析 CSV 内容
-      const rows = fileContent.trim().split('\n');
-      const headers = rows[0].split(',');
+      // 使用csv-parse正确解析CSV
+      const records = parse(fileContent, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      });
+      
       // 字段映射
       const fieldMap: Record<string, string> = {
         '视频ID': 'id',
-        '描述': 'description',
-        '作者': 'author',
+        '描述': 'description', 
+        '作者用户名': 'author',
+        '作者昵称': 'author',
         '点赞数': 'likes',
         '评论数': 'comments',
         '分享数': 'shares',
-        '播放数': 'plays',
+        '播放量': 'plays',
         '创建时间': 'createTime',
         '视频链接': 'videoUrl',
         '是否CapCut投稿': 'isCapCut',
         'CapCut置信度': 'capCutConfidence',
         '来源平台代码': 'sourcePlatform',
       };
-      const data = rows.slice(1).map(row => {
-        const values = row.split(',');
-        return headers.reduce((obj, header, index) => {
-          const key = fieldMap[header] || header;
-          obj[key] = values[index];
-          return obj;
-        }, {} as Record<string, string>);
+      
+      const data = records.map((record: any) => {
+        const mappedRecord: any = {};
+        Object.keys(record).forEach(key => {
+          const mappedKey = fieldMap[key] || key;
+          if (fieldMap[key]) {
+            mappedRecord[mappedKey] = record[key] || '-';
+          }
+        });
+        
+        // 确保必要字段存在
+        return {
+          id: mappedRecord.id || '-',
+          description: mappedRecord.description || '-',
+          author: mappedRecord.author || '-',
+          likes: mappedRecord.likes || '-',
+          comments: mappedRecord.comments || '-',
+          shares: mappedRecord.shares || '-',
+          plays: mappedRecord.plays || '-',
+          createTime: mappedRecord.createTime || '-',
+          videoUrl: mappedRecord.videoUrl || '-',
+          isCapCut: mappedRecord.isCapCut || '-',
+          capCutConfidence: mappedRecord.capCutConfidence || '-',
+          sourcePlatform: mappedRecord.sourcePlatform || '-'
+        };
       });
       // 返回JSON和文件名
       return NextResponse.json({ data, fileName: basename(outputPath) });
