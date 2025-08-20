@@ -99,7 +99,9 @@ export default function VideoInfo() {
       const formData = new FormData();
       formData.append('file', fileList[0].originFileObj as File);
       const response = await axios.post('/api/batch-videos', formData);
-      if (Array.isArray(response.data)) {
+      if (response.data && Array.isArray(response.data.data)) {
+        setData(response.data.data);
+      } else if (Array.isArray(response.data)) {
         setData(response.data);
       } else {
         setData([]);
