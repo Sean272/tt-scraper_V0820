@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 // 获取用户信息的函数
 async function getUserProfileInfo(username) {
