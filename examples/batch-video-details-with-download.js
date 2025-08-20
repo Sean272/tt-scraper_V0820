@@ -1,12 +1,16 @@
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
-const { createObjectCsvWriter } = require('csv-writer');
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import csvParser from 'csv-parser';
+import { createObjectCsvWriter } from 'csv-writer';
 
 // 重用单个视频详情的处理逻辑
-const { formatNumber, formatDate, formatBoolean, formatArray, formatCSVField, MAX_RETRIES, RETRY_DELAY, sleep } = require('./show-video-details');
-const { detectCapCutSource } = require('./capcut-detector');
+import { formatNumber, formatDate, formatBoolean, formatArray, formatCSVField, MAX_RETRIES, RETRY_DELAY, sleep } from './show-video-details.js';
+import { detectCapCutSource } from './capcut-detector.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 下载视频函数
 async function downloadVideo(videoUrl, videoId, downloadDir) {
@@ -84,7 +88,7 @@ async function processBatchVideos(inputCsvPath, enableDownload = false) {
         // 从CSV读取视频ID和可选的时长数据
         await new Promise((resolve, reject) => {
             fs.createReadStream(inputCsvPath)
-                .pipe(csv())
+                .pipe(csvParser())
                 .on('data', (row) => {
                     const rowValues = Object.values(row);
                     // 获取第一列数据作为视频ID（无论列名是什么）
