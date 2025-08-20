@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     await writeFile(tempFilePath, buffer);
 
     // 绝对路径
-    const scriptPath = resolve(process.cwd(), '../examples/batch-video-details.js');
+    const scriptPath = resolve(process.cwd(), '../examples/batch-video-details-with-download.js');
     const outputDir = resolve(process.cwd(), '../examples/output');
 
     // 调用 Node.js 脚本
