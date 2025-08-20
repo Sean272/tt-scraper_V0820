@@ -138,7 +138,11 @@ async function getUserProfileInfo(username) {
 }
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import csvParser from 'csv-parser';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 检查命令行参数
 if (process.argv.length < 3) {
