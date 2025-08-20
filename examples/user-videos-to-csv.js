@@ -164,7 +164,7 @@ async function getUserVideos(username, timeRange, timeUnit, skipCapcutCheck = fa
                     video.stats.commentCount,
                     video.stats.shareCount,
                     video.stats.playCount,
-                    createTime,
+                    createTime.replace(/,/g, ' '), // 移除时间中的逗号，避免CSV格式错误
                     `https://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}`,
                     capCutInfo.isCapCut,
                     capCutInfo.sourcePlatform
