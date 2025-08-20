@@ -58,8 +58,11 @@ export async function POST(request: Request) {
         if (saveLineMatch) {
           const csvFilePath = saveLineMatch[1].trim();
           try {
-            // 读取CSV文件内容
-            const csvContent = await readFile(csvFilePath, 'utf-8');
+            // 读取CSV文件内容，移除BOM
+            let csvContent = await readFile(csvFilePath, 'utf-8');
+            if (csvContent.charCodeAt(0) === 0xFEFF) {
+              csvContent = csvContent.slice(1);
+            }
             const records = parse(csvContent, {
               columns: true,
               skip_empty_lines: true,
@@ -70,9 +73,10 @@ export async function POST(request: Request) {
             });
             
             // 将CSV数据转换为API格式
-            records.forEach((record: any) => {
+            console.log(`成功解析CSV，共 ${records.length} 条记录`);
+            records.forEach((record: any, index: number) => {
               if (record['视频ID'] && record['视频ID'].trim()) {
-                allVideos.push({
+                const videoData = {
                   id: record['视频ID'].trim(),
                   description: record['描述'] || '-',
                   author: record['作者'] || author,
@@ -80,12 +84,16 @@ export async function POST(request: Request) {
                   plays: record['播放数'] || record['播放量'] || '-',
                   createTime: record['创建时间'] || '-',
                   videoUrl: `https://www.tiktok.com/@${author}/video/${record['视频ID'].trim()}`
-                });
+                };
+                allVideos.push(videoData);
+                console.log(`添加视频 ${index + 1}: ${videoData.id}`);
               }
             });
           } catch (csvError) {
             console.error(`读取CSV文件失败 ${csvFilePath}:`, csvError);
           }
+        } else {
+          console.log(`未找到CSV文件路径，脚本输出：${stdout.substring(0, 200)}...`);
         }
         
         console.log(`作者 ${author} 处理完成`);
