@@ -74,7 +74,7 @@ export async function POST(request: Request) {
                   description: record['描述'] || '-',
                   author: record['作者'] || author,
                   likes: record['点赞数'] || '-',
-                  plays: record['播放量'] || record['播放数'] || '-',
+                  plays: record['播放数'] || record['播放量'] || '-',
                   createTime: record['创建时间'] || '-',
                   videoUrl: `https://www.tiktok.com/@${author}/video/${record['视频ID'].trim()}`
                 });
