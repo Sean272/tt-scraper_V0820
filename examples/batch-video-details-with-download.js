@@ -85,33 +85,50 @@ async function processBatchVideos(inputCsvPath, enableDownload = false) {
     const videoData = [];
     
     try {
-        // 从CSV读取视频ID和可选的时长数据
-        await new Promise((resolve, reject) => {
-            fs.createReadStream(inputCsvPath)
-                .pipe(csvParser())
-                .on('data', (row) => {
-                    const rowValues = Object.values(row);
-                    // 获取第一列数据作为视频ID（无论列名是什么）
-                    const videoId = rowValues[0];
-                    // 获取第二列数据作为时长（如果存在）
-                    const duration = rowValues[1];
-                    
-                    if (videoId && /^\d+$/.test(videoId)) { // 确保ID是纯数字
-                        const item = { videoId };
-                        // 如果第二列存在且是有效数字，则添加时长信息
-                        if (duration && /^\d+$/.test(duration)) {
-                            item.expectedDuration = parseInt(duration);
+        // 读取文件内容，支持纯文本和CSV格式
+        const fileContent = fs.readFileSync(inputCsvPath, 'utf-8');
+        const lines = fileContent.trim().split('\n');
+        
+        // 检查是否是CSV格式（包含逗号）还是纯文本格式
+        const isCSV = lines.some(line => line.includes(','));
+        
+        if (isCSV) {
+            // CSV格式处理
+            await new Promise((resolve, reject) => {
+                fs.createReadStream(inputCsvPath)
+                    .pipe(csvParser())
+                    .on('data', (row) => {
+                        const rowValues = Object.values(row);
+                        // 获取第一列数据作为视频ID（无论列名是什么）
+                        const videoId = rowValues[0];
+                        // 获取第二列数据作为时长（如果存在）
+                        const duration = rowValues[1];
+                        
+                        if (videoId && /^\d+$/.test(videoId)) { // 确保ID是纯数字
+                            const item = { videoId };
+                            // 如果第二列存在且是有效数字，则添加时长信息
+                            if (duration && /^\d+$/.test(duration)) {
+                                item.expectedDuration = parseInt(duration);
+                            }
+                            videoData.push(item);
                         }
-                        videoData.push(item);
-                    }
-                })
-                .on('end', () => {
-                    resolve();
-                })
-                .on('error', (err) => {
-                    reject(err);
-                });
-        });
+                    })
+                    .on('end', () => {
+                        resolve();
+                    })
+                    .on('error', (err) => {
+                        reject(err);
+                    });
+            });
+        } else {
+            // 纯文本格式处理（每行一个视频ID）
+            lines.forEach(line => {
+                const videoId = line.trim();
+                if (videoId && /^\d+$/.test(videoId)) { // 确保ID是纯数字
+                    videoData.push({ videoId });
+                }
+            });
+        }
         
         console.log(`从CSV文件中读取到 ${videoData.length} 个视频ID`);
         
