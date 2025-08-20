@@ -1,7 +1,11 @@
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const { detectCapCutSource } = require('./capcut-detector');
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { detectCapCutSource } from './capcut-detector.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 重试配置
 const MAX_RETRIES = 3;
@@ -267,13 +271,13 @@ if (process.argv.length < 3) {
 }
 
 // 仅在直接运行此文件时执行
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     const videoId = process.argv[2];
     getVideoDetails(videoId);
 }
 
 // 导出工具函数供其他模块使用
-module.exports = {
+export {
     formatNumber,
     formatDate,
     formatBoolean,
