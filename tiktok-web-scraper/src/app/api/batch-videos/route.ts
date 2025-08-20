@@ -20,8 +20,8 @@ export async function GET(request: Request) {
     const csvContent = await readFile(filePath);
     return new NextResponse(csvContent, {
       headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="${file}"`,
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(file)}"`,
       },
     });
   } catch (error) {

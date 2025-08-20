@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { resolve } from 'path';
-import { writeFile } from 'fs/promises';
+import { writeFile, readFile } from 'fs/promises';
+import { parse } from 'csv-parse/sync';
 
 const execAsync = promisify(exec);
 
@@ -52,45 +53,39 @@ export async function POST(request: Request) {
           `node "${scriptPath}" "${author}" 7 days --skip-capcut-check`
         );
         
-        // 解析每个作者的输出
-        const lines = stdout.split('\n');
-        let inPreviewSection = false;
-        let currentVideo: Partial<VideoData> = {};
-        let videoCount = 0;
-        
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          
-          if (trimmedLine.startsWith('视频 ')) {
-            if (currentVideo.description) {
-              // 为当前视频生成ID和URL
-              currentVideo.id = `${author}-video-${++videoCount}`;
-              currentVideo.author = author;
-              currentVideo.videoUrl = `https://www.tiktok.com/@${author}/video/${currentVideo.id}`;
-              allVideos.push(currentVideo as VideoData);
-            }
-            currentVideo = {};
-            inPreviewSection = true;
-          } else if (inPreviewSection && trimmedLine.startsWith('- 描述:')) {
-            currentVideo.description = trimmedLine.replace('- 描述:', '').trim();
-          } else if (inPreviewSection && trimmedLine.startsWith('- 点赞数:')) {
-            currentVideo.likes = trimmedLine.replace('- 点赞数:', '').trim();
-          } else if (inPreviewSection && trimmedLine.startsWith('- 播放数:')) {
-            currentVideo.plays = trimmedLine.replace('- 播放数:', '').trim();
-          } else if (inPreviewSection && trimmedLine.startsWith('- 创建时间:')) {
-            currentVideo.createTime = trimmedLine.replace('- 创建时间:', '').trim();
+        // 从输出中提取CSV文件路径
+        const saveLineMatch = stdout.match(/数据已保存到:\s*(.+\.csv)/);
+        if (saveLineMatch) {
+          const csvFilePath = saveLineMatch[1].trim();
+          try {
+            // 读取CSV文件内容
+            const csvContent = await readFile(csvFilePath, 'utf-8');
+            const records = parse(csvContent, {
+              columns: true,
+              skip_empty_lines: true,
+              trim: true
+            });
+            
+            // 将CSV数据转换为API格式
+            records.forEach((record: any) => {
+              if (record['视频ID'] && record['视频ID'].trim()) {
+                allVideos.push({
+                  id: record['视频ID'].trim(),
+                  description: record['描述'] || '-',
+                  author: record['作者'] || author,
+                  likes: record['点赞数'] || '-',
+                  plays: record['播放量'] || record['播放数'] || '-',
+                  createTime: record['创建时间'] || '-',
+                  videoUrl: `https://www.tiktok.com/@${author}/video/${record['视频ID'].trim()}`
+                });
+              }
+            });
+          } catch (csvError) {
+            console.error(`读取CSV文件失败 ${csvFilePath}:`, csvError);
           }
         }
         
-        // 添加最后一个视频
-        if (currentVideo.description) {
-          currentVideo.id = `${author}-video-${++videoCount}`;
-          currentVideo.author = author;
-          currentVideo.videoUrl = `https://www.tiktok.com/@${author}/video/${currentVideo.id}`;
-          allVideos.push(currentVideo as VideoData);
-        }
-        
-        console.log(`作者 ${author} 处理完成，找到 ${videoCount} 个视频`);
+        console.log(`作者 ${author} 处理完成`);
       } catch (error) {
         console.error(`处理作者 ${author} 时出错:`, error);
       }
