@@ -30,6 +30,8 @@ export default function AuthorVideos() {
   const [queryInfo, setQueryInfo] = useState<QueryInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [batchTimeRange, setBatchTimeRange] = useState<string>('7');
+  const [batchTimeUnit, setBatchTimeUnit] = useState<string>('days');
 
   const columns: ColumnsType<VideoData> = [
     {
@@ -97,10 +99,17 @@ export default function AuthorVideos() {
       return;
     }
 
+    if (!batchTimeRange || parseInt(batchTimeRange) <= 0) {
+      setError('请输入有效的时间范围');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     const formData = new FormData();
     formData.append('file', fileList[0].originFileObj as Blob);
+    formData.append('timeRange', batchTimeRange);
+    formData.append('timeUnit', batchTimeUnit);
 
     try {
       const response = await axios.post('/api/batch-authors-videos', formData, {
@@ -111,7 +120,11 @@ export default function AuthorVideos() {
 
       if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         setData(response.data);
-        setQueryInfo(null);
+        setQueryInfo({
+          author: `批量查询`,
+          timeRange: batchTimeRange,
+          timeUnit: batchTimeUnit
+        });
       } else {
         setData([]);
         setError('未找到视频');
@@ -155,25 +168,43 @@ export default function AuthorVideos() {
         </Form.Item>
       </Form>
 
-      <div>
-        <Upload
-          accept=".txt,.csv"
-          fileList={fileList}
-          onChange={({ fileList }) => setFileList(fileList)}
-          beforeUpload={() => false}
-          maxCount={1}
-        >
-          <Button icon={<UploadOutlined />}>选择作者列表文件</Button>
-        </Upload>
-        <Button
-          type="primary"
-          onClick={handleBatchUpload}
-          loading={loading}
-          style={{ marginLeft: 16 }}
-          disabled={!fileList.length}
-        >
-          批量查询
-        </Button>
+      <div style={{ marginTop: 16, padding: 16, border: '1px solid #d9d9d9', borderRadius: 6 }}>
+        <div style={{ marginBottom: 16, fontWeight: 'bold' }}>批量查询设置</div>
+        <Space>
+          <Upload
+            accept=".txt,.csv"
+            fileList={fileList}
+            onChange={({ fileList }) => setFileList(fileList)}
+            beforeUpload={() => false}
+            maxCount={1}
+          >
+            <Button icon={<UploadOutlined />}>选择作者列表文件</Button>
+          </Upload>
+          <Input 
+            type="number" 
+            placeholder="时间范围" 
+            style={{ width: 100 }} 
+            value={batchTimeRange}
+            onChange={(e) => setBatchTimeRange(e.target.value)}
+          />
+          <Select 
+            style={{ width: 100 }} 
+            value={batchTimeUnit}
+            onChange={(value) => setBatchTimeUnit(value)}
+          >
+            <Select.Option value="days">天</Select.Option>
+            <Select.Option value="weeks">周</Select.Option>
+            <Select.Option value="months">月</Select.Option>
+          </Select>
+          <Button
+            type="primary"
+            onClick={handleBatchUpload}
+            loading={loading}
+            disabled={!fileList.length}
+          >
+            批量查询
+          </Button>
+        </Space>
       </div>
 
       {queryInfo && (

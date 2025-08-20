@@ -38,6 +38,10 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(tempFile, buffer);
 
+    // 获取时间参数，默认为7天
+    const timeRange = formData.get('timeRange') as string || '7';
+    const timeUnit = formData.get('timeUnit') as string || 'days';
+
     // 读取作者列表
     const authorList = buffer.toString('utf-8').trim().split('\n').map(line => line.trim()).filter(line => line);
     
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
       try {
         console.log(`正在处理作者: ${author}`);
         const { stdout } = await execAsync(
-          `node "${scriptPath}" "${author}" 7 days --skip-capcut-check`
+          `node "${scriptPath}" "${author}" ${timeRange} ${timeUnit} --skip-capcut-check`
         );
         
         // 从输出中提取CSV文件路径
